@@ -1,0 +1,735 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>evandmytrow.com</title>
+<meta name="description" content="Evan Dmytrow">
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  html, body { height:100%; background:#fff; color:#000; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    height:100dvh; overflow:hidden; position:relative;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .top { position:absolute; top:calc(20px + env(safe-area-inset-top)); left:0; right:0; text-align:center; z-index:5; }
+  .dom { font-size:24px; line-height:32px; letter-spacing:.01em; font-weight:400; white-space:nowrap; }
+  #domain { display:inline-block; }
+  #w { display:inline-block; transition:opacity .3s; }
+  body.seq #w { opacity:0; transition:none; }
+  body.flicker #domain { animation: powerFlicker 1.1s steps(1) forwards; }
+  @keyframes powerFlicker {
+    0%, 12%, 28%, 45%, 62% { opacity:0; }
+    6%, 18%, 35%, 55%, 70%, 100% { opacity:1; }
+  }
+
+  .namewrap { position:relative; display:inline-block; margin-top:4px; }
+  #name {
+    font:inherit; font-size:14px; letter-spacing:.02em; color:#000;
+    background:none; border:0; padding:6px 10px; cursor:pointer; position:relative;
+  }
+  #name .arrow {
+    display:inline-block; margin-left:4px; width:0; height:0;
+    border-left:6px solid transparent; border-right:6px solid transparent;
+    border-top:7px solid #000; vertical-align:2px; opacity:.75;
+  }
+
+  /* Classic Christmas string lights on the domain */
+  .dom { position:relative; display:inline-block; /* shrink-wrap the text */ }
+  .namewrap { display:block; }
+  #xmas {
+    position:absolute; left:0; right:0; top:100%;
+    height:26px; pointer-events:none; z-index:6;
+    transition: transform .7s ease, top .7s ease;
+  }
+  body.seq #xmas {
+    top:122%;
+    transform:rotate(2.5deg);
+  }
+  #xmas .wire {
+    position:absolute; left:2px; right:2px; top:1px; height:2px;
+    background:#333; border-radius:1px; opacity:.75; z-index:1;
+  }
+  #xmas .bulb {
+    position:absolute; top:0; width:10px; height:16px;
+    transform:translateX(-50%);
+    transition: top .7s ease; z-index:2;
+  }
+  #xmas .bulb::before {
+    content:""; position:absolute; left:50%; top:2px; width:5px; height:4px;
+    margin-left:-2.5px; background:#2a2a2a; border-radius:1px 1px 0 0;
+  }
+  #xmas .bulb::after {
+    content:""; position:absolute; left:50%; top:5px; width:10px; height:10px;
+    margin-left:-5px; border-radius:50% 50% 40% 40%;
+    box-shadow:0 0 7px 1px currentColor, 0 0 14px -1px currentColor;
+    animation: glow 2.6s ease-in-out infinite;
+  }
+  #xmas .bulb.red::after  { background:#e11d2e; color:#e11d2e; }
+  #xmas .bulb.green::after { background:#0d9b45; color:#0d9b45; }
+  #xmas .bulb.blue::after  { background:#1a5cff; color:#1a5cff; }
+  #xmas .bulb:nth-child(3n)::after { animation-delay:0s; }
+  #xmas .bulb:nth-child(3n+1)::after { animation-delay:.85s; }
+  #xmas .bulb:nth-child(3n+2)::after { animation-delay:1.65s; }
+  body.seq #xmas .bulb:nth-child(odd) { top:6px; }
+  body.seq #xmas .bulb:nth-child(even) { top:10px; }
+  @keyframes glow {
+    0%, 100% { opacity:.5; filter:brightness(.8); }
+    50% { opacity:1; filter:brightness(1.3); }
+  }
+
+  /* frosted glass panels */
+  #pop {
+    position:absolute; top:100%; left:50%; transform:translateX(-50%);
+    min-width:250px; text-align:left; z-index:30;
+    background:rgba(255,255,255,.72);
+    backdrop-filter:blur(16px) saturate(1.4);
+    -webkit-backdrop-filter:blur(16px) saturate(1.4);
+    border:1px solid rgba(0,0,0,.18);
+    box-shadow:0 8px 32px rgba(0,0,0,.08);
+  }
+  #pop[hidden] { display:none; }
+  #pop a, #pop .msg {
+    display:block; padding:13px 16px; color:#000; text-decoration:none;
+    font-size:14px; border-bottom:1px solid rgba(0,0,0,.12);
+  }
+  #pop a:last-child, #pop .msg:last-child { border-bottom:0; }
+  #pop a:hover, #pop a:active { background:rgba(0,0,0,.06); }
+  #pop .msg { font-style:italic; text-align:center; cursor:default; }
+
+  .clock { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none; }
+  #t { font-size:clamp(26px, 9vw, 72px); font-weight:700; letter-spacing:-.02em; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  #age { position:absolute; left:16px; bottom:calc(16px + env(safe-area-inset-bottom)); font-size:28px; font-weight:700; line-height:1; }
+
+  /* the falling W and the ants live on a layer above everything */
+  #layer { position:fixed; inset:0; z-index:20; pointer-events:none; overflow:hidden; }
+  .fw { position:fixed; left:0; top:0; text-align:center; will-change:transform; }
+  .fw.dead { color:#222; opacity:.55; filter:grayscale(1); }
+
+  /* Code of Conduct centered modal */
+  #coc-overlay {
+    position:fixed; inset:0; z-index:60; background:rgba(0,0,0,.4);
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; pointer-events:none; transition:opacity .25s ease;
+    padding:20px;
+  }
+  #coc-overlay.open { opacity:1; pointer-events:auto; }
+  #coc-modal {
+    position:relative; width:100%; max-width:420px; max-height:min(78vh, 560px);
+    background:rgba(255,255,255,.82);
+    backdrop-filter:blur(18px) saturate(1.4);
+    -webkit-backdrop-filter:blur(18px) saturate(1.4);
+    border:1px solid rgba(0,0,0,.14);
+    box-shadow:0 16px 48px rgba(0,0,0,.12);
+    display:flex; flex-direction:column;
+    transform:scale(.96); transition:transform .25s ease;
+  }
+  #coc-overlay.open #coc-modal { transform:scale(1); }
+  #coc-modal .coc-head {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 18px 12px; border-bottom:1px solid rgba(0,0,0,.1);
+    font-size:13px; font-weight:600; letter-spacing:.06em; text-transform:uppercase;
+  }
+  #coc-modal .coc-close {
+    background:none; border:0; font-size:22px; line-height:1; cursor:pointer;
+    color:#000; padding:4px 8px; margin:-4px -8px -4px 0;
+  }
+  #coc-modal .coc-body {
+    flex:1; overflow-y:auto; padding:18px 20px 20px;
+    font-size:14px; line-height:1.55; color:#111;
+    scroll-behavior:smooth;
+  }
+  #coc-modal .coc-body h3 { font-size:13px; letter-spacing:.04em; text-transform:uppercase; margin:16px 0 6px; }
+  #coc-modal .coc-body h3:first-child { margin-top:0; }
+  #coc-modal .coc-body p { margin-bottom:10px; }
+  #coc-modal .coc-nav {
+    display:flex; justify-content:center; gap:12px; padding:10px;
+    border-top:1px solid rgba(0,0,0,.1);
+  }
+  #coc-modal .coc-nav button {
+    width:40px; height:36px; border:1px solid rgba(0,0,0,.25); background:rgba(255,255,255,.5);
+    font-size:16px; cursor:pointer; border-radius:4px;
+  }
+  #coc-modal .coc-nav button:active { background:rgba(0,0,0,.08); }
+
+  /* Why modal — same shell, larger body text */
+  #why-overlay {
+    position:fixed; inset:0; z-index:60; background:rgba(0,0,0,.4);
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; pointer-events:none; transition:opacity .25s ease;
+    padding:20px;
+  }
+  #why-overlay.open { opacity:1; pointer-events:auto; }
+  #why-modal {
+    position:relative; width:100%; max-width:420px; max-height:min(78vh, 560px);
+    background:rgba(255,255,255,.82);
+    backdrop-filter:blur(18px) saturate(1.4);
+    -webkit-backdrop-filter:blur(18px) saturate(1.4);
+    border:1px solid rgba(0,0,0,.14);
+    box-shadow:0 16px 48px rgba(0,0,0,.12);
+    display:flex; flex-direction:column;
+    transform:scale(.96); transition:transform .25s ease;
+  }
+  #why-overlay.open #why-modal { transform:scale(1); }
+  #why-modal .why-head {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 18px 12px; border-bottom:1px solid rgba(0,0,0,.1);
+    font-size:13px; font-weight:600; letter-spacing:.06em; text-transform:uppercase;
+  }
+  #why-modal .why-close {
+    background:none; border:0; font-size:22px; line-height:1; cursor:pointer;
+    color:#000; padding:4px 8px; margin:-4px -8px -4px 0;
+  }
+  #why-modal .why-body {
+    flex:1; overflow-y:auto; padding:28px 24px 32px;
+    font-size:20px; line-height:1.5; color:#111; font-weight:400;
+  }
+  #why-modal .why-body p { margin-bottom:18px; }
+  #why-modal .why-body p:last-child { margin-bottom:0; }
+
+  #pop .why-btn {
+    display:block; width:100%; padding:13px 16px; border:0; border-top:1px solid rgba(0,0,0,.12);
+    background:transparent; font:inherit; font-size:14px; color:#000; text-align:left; cursor:pointer;
+  }
+  #pop .why-btn:hover, #pop .why-btn:active { background:rgba(0,0,0,.06); }
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="dom">
+    <span id="domain">evandmytro<span id="w">w</span>.com</span>
+    <div id="xmas" aria-hidden="true"><div class="wire"></div></div>
+  </div>
+  <div class="namewrap">
+    <button type="button" id="name" aria-expanded="false" aria-controls="pop">
+      Evan Dmytrow<span class="arrow" aria-hidden="true"></span>
+    </button>
+    <div id="pop" hidden>
+      <a href="https://www.instagram.com/evandmytrow?srtk=MXhxbnZobGJpcDd4" target="_blank" rel="noopener noreferrer">Instagram</a>
+      <a href="https://www.roblox.com/users/844550433/profile" target="_blank" rel="noopener noreferrer">Roblox</a>
+      <a href="https://xhslink.cn/m/2zxj32LeLla" target="_blank" rel="noopener noreferrer">RedNote</a>
+      <a href="mailto:evandmytrowttw@gmail.com">evandmytrowttw@gmail.com</a>
+      <a href="tel:+19053594595">905 359 4595</a>
+      <a href="#" id="coc-link">Code of Conduct</a>
+    </div>
+  </div>
+</div>
+
+<div class="clock"><div id="t"></div></div>
+<div id="age"></div>
+<div id="layer"></div>
+
+<div id="coc-overlay" aria-hidden="true">
+  <div id="coc-modal" role="dialog" aria-labelledby="coc-title">
+    <div class="coc-head">
+      <span id="coc-title">Code of Conduct</span>
+      <button type="button" class="coc-close" aria-label="Close">×</button>
+    </div>
+    <div class="coc-body" id="coc-body">
+      <p style="margin-bottom:14px;font-size:12px;letter-spacing:.03em;opacity:.7;">Effective Date: Upon publication.</p>
+
+      <h3>1. Purpose and Scope</h3>
+      <p>The purpose of this document is to establish the general expectations, guidelines, and conditions associated with the use of evandmytrow.com.</p>
+      <p>By accessing, browsing, or otherwise interacting with this website, visitors acknowledge that the website is a personal project maintained at the discretion of its creator. The website may contain personal interests, creative projects, ideas, photographs, music-related content, outdoor activities, or other material deemed appropriate for publication.</p>
+      <p>The website is not intended to function as a public institution, professional service, commercial authority, or universally applicable source of information. Its existence should not be interpreted as a declaration of importance beyond the scope of its actual contents.</p>
+
+      <h3>2. Appropriate Conduct</h3>
+      <p>Visitors are expected to interact with the website in a manner consistent with ordinary standards of respect, civility, and lawful conduct.</p>
+      <p>The following activities are discouraged or prohibited where applicable:</p>
+      <p>• Using the website to engage in unlawful activity.</p>
+      <p>• Attempting to compromise the security, availability, or integrity of the website.</p>
+      <p>• Attempting to access private information, administrative systems, or restricted resources without authorization.</p>
+      <p>• Using any available communication or subscription features to harass, threaten, impersonate, or otherwise harm another person.</p>
+      <p>• Submitting malicious code, automated abuse, or other material intended to disrupt the website or its operation.</p>
+      <p>The website owner reserves the right to restrict access, remove content, disable features, or take other reasonable measures in response to misuse.</p>
+      <p>Nothing in this section should be interpreted as a promise that monitoring, enforcement, or preventative action will occur in every circumstance.</p>
+
+      <h3>3. Content and Intellectual Property</h3>
+      <p>Unless otherwise indicated, original content published on evandmytrow.com is the property of its creator.</p>
+      <p>Visitors may view the website for personal, non-commercial purposes. No permission is granted to reproduce, redistribute, modify, commercially exploit, or represent original content as the work of another person without appropriate authorization.</p>
+      <p>Third-party names, trademarks, images, music, references, or other materials remain subject to the rights and conditions applicable to their respective owners.</p>
+      <p>The inclusion of any third-party material does not necessarily imply sponsorship, endorsement, partnership, or formal affiliation.</p>
+      <p>The website owner makes no representation that every element of the website is original, exclusive, comprehensive, or free from third-party rights. Any concerns regarding published material may be communicated to the website owner for consideration.</p>
+
+      <h3>4. Privacy and Information Collection</h3>
+      <p>The website may offer optional features that require visitors to submit limited personal information, including an email address.</p>
+      <p>Providing such information is voluntary unless otherwise explicitly stated. Visitors should not submit information they do not wish to share.</p>
+      <p>Any personal information collected through the website should be used only for the purposes reasonably associated with the relevant feature, such as delivering requested email communications, maintaining subscriptions, or operating the website.</p>
+      <p>Personal information should not be knowingly sold or disclosed to unrelated third parties for their independent marketing purposes.</p>
+      <p>Reasonable measures should be taken to protect collected information. However, no website, database, communication service, or internet transmission can be guaranteed to be completely secure.</p>
+      <p>Visitors are encouraged to review any applicable privacy notice before submitting personal information.</p>
+
+      <h3>5. Email Communications and Subscriptions</h3>
+      <p>Visitors may have the option to subscribe to email communications from evandmytrow.com. By subscribing, a visitor voluntarily requests to receive such communications at the email address provided.</p>
+      <p>The frequency, timing, and content of these emails are not guaranteed. Communications may be sporadic, infrequent, irregular, or limited to a single email within a calendar year. The website owner makes no commitment to maintain a particular schedule, provide regular updates, or ensure that the website remains an active project.</p>
+      <p>Some communications may contain little information, minimal text, or content that serves no practical purpose beyond the fact that it was sent.</p>
+      <p>Subscribers may unsubscribe using the unsubscribe mechanism provided with the email. Requests to unsubscribe should be respected, and unsubscribed addresses should not receive further emails of the same type.</p>
+      <p>If a recipient does not wish to receive further communications and an unsubscribe mechanism is unavailable or not functioning, blocking the sender is an additional option.</p>
+      <p>Subscription to the email list should not be interpreted as an expectation of regular correspondence, meaningful updates, entertainment, financial value, or any other particular benefit.</p>
+
+      <h3>6. Availability and Changes</h3>
+      <p>The website is provided on an as-available basis. It may be modified, redesigned, temporarily inaccessible, permanently discontinued, or left unchanged for an indefinite period.</p>
+      <p>The website owner is under no obligation to publish new content, maintain every feature, respond to every inquiry, or preserve the website in its current form.</p>
+      <p>Features may be introduced, changed, suspended, or removed at the website owner's discretion. Previous availability does not guarantee continued availability.</p>
+      <p>This document may also be revised as the website evolves. Visitors are responsible for reviewing the version currently published if they wish to remain informed of its stated guidelines.</p>
+
+      <h3>7. Limitation of Expectations and Responsibility</h3>
+      <p>Content on evandmytrow.com is provided primarily for personal, informational, or creative purposes. Unless expressly stated otherwise, it should not be treated as professional, legal, financial, medical, technical, or other specialized advice.</p>
+      <p>To the extent permitted by applicable law, the website owner makes no guarantee regarding the accuracy, completeness, availability, usefulness, or suitability of the website or its content for any particular purpose.</p>
+      <p>Visitors are responsible for their own decisions concerning the use of information obtained through the website.</p>
+      <p>Nothing in this document is intended to exclude or limit any rights, obligations, or liabilities that cannot lawfully be excluded or limited under applicable law.</p>
+
+      <h3>8. Disclaimer</h3>
+      <p>The code of conduct means nothing here it’s just gonna look cooler for my Instagram.</p>
+    </div>
+    <div class="coc-nav">
+      <button type="button" id="coc-up" aria-label="Scroll up">↑</button>
+      <button type="button" id="coc-down" aria-label="Scroll down">↓</button>
+    </div>
+  </div>
+</div>
+
+<div id="why-overlay" aria-hidden="true">
+  <div id="why-modal" role="dialog" aria-labelledby="why-title">
+    <div class="why-head">
+      <span id="why-title">Why did I make this website?</span>
+      <button type="button" class="why-close" aria-label="Close">×</button>
+    </div>
+    <div class="why-body">
+      <p>I made this website because it would look cool on Instagram. I also partly made it just to mess around with Claude. That’s it.</p>
+      <p style="margin-top:28px;font-size:16px;opacity:.75;">— Evan Dmytrow</p>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===== Countdown + age =====
+   Birthday is Feb 8 (midnight, Toronto time). Evan is 18 until Feb 8, 2027, so he was born in 2008.
+   On every Feb 8 the age goes up by 1 and the countdown restarts, with no animation. */
+const BIRTH_YEAR = 2008;
+const pad = (n, l = 2) => String(n).padStart(l, "0");
+function nextBirthday(now) {
+  const y = new Date(now).getUTCFullYear();
+  for (let k = 0; k < 3; k++) {
+    const t = Date.UTC(y + k, 1, 8, 5, 0, 0);   /* Feb 8, 00:00 Toronto (UTC-5 in winter) */
+    if (t > now) return { t, year: y + k };
+  }
+}
+const tEl = document.getElementById("t"), ageEl = document.getElementById("age");
+let lastT = "", lastAge = "";
+function tick() {
+  const now = Date.now(), nb = nextBirthday(now);
+  let s = Math.max(0, Math.ceil((nb.t - now) / 1000));
+  const d = Math.floor(s / 86400); s %= 86400;
+  const h = Math.floor(s / 3600); s %= 3600;
+  const m = Math.floor(s / 60); s %= 60;
+  const text = `${pad(d, 3)}:${pad(h)}:${pad(m)}:${pad(s)}`;
+  const age = String(nb.year - BIRTH_YEAR - 1);
+  if (text !== lastT) { tEl.textContent = text; lastT = text; }
+  if (age !== lastAge) { ageEl.textContent = age; lastAge = age; }
+}
+tick();
+setInterval(tick, 250);
+
+/* ===== Socials popout ===== */
+const pop = document.getElementById("pop"), nameBtn = document.getElementById("name");
+const socialHTML = pop.innerHTML;
+let nameClicks = 0;
+function setPop(open) {
+  pop.hidden = !open;
+  nameBtn.setAttribute("aria-expanded", String(open));
+}
+nameBtn.addEventListener("click", e => {
+  e.stopPropagation();
+  if (!pop.hidden) { setPop(false); return; }
+  nameClicks++;
+  if (nameClicks % 5 === 0) {
+    pop.innerHTML = '<div class="msg">I own my name and so should you</div><button type="button" class="why-btn" id="why-btn">Why did I make this website?</button>';
+  } else {
+    pop.innerHTML = socialHTML;
+  }
+  setPop(true);
+});
+document.addEventListener("click", e => { if (!pop.hidden && !pop.contains(e.target)) setPop(false); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") setPop(false); });
+
+/* Classic Christmas lights on the domain */
+(function () {
+  const xmas = document.getElementById("xmas");
+  if (!xmas) return;
+  const colors = ["red", "green", "blue"];
+  const n = 9;
+  for (let i = 0; i < n; i++) {
+    const b = document.createElement("span");
+    b.className = "bulb " + colors[i % 3];
+    b.style.left = (8 + (i / (n - 1)) * 84) + "%";
+    xmas.appendChild(b);
+  }
+})();
+
+/* ===== The W and the ants =====
+   At the start of every clock minute the "w" falls, goes dark/dead on the ground.
+   A colony builds a swaying tower. As the tower grows the ants pick up the dead W
+   and carry it up with them, slotting it back into the domain. The name flickers
+   back to life a few times when the letter is restored. Then the tower collapses.
+     0 to ~1.5s    the W falls, lands dead (black, dim)
+     0.2 to 4s     colony arrives
+     4 to ~12s     tower builds + sways; ants begin carrying the W upward mid-build
+     ~13.5s        W is placed; domain name power-flickers back on
+     16.6s         tower lets go, ants fall
+   800 black ants + one blue ant per year of age.                                        */
+const SEQ = 24, T_TOP = 12.5, T_CARRY = 13.8, T_FALL = 16.6, G = 2400, STILL = 2.5, FADE = 1.5;
+const BLACK_ANTS = 800, SMALL = .22, BIG = .44, BLUE = "#1f4bff";
+const LEGS = [new Path2D("M-2 -1L-6 -6M1 -1L2 -6M4 -1L8 -5M-2 1L-4 5M1 1L2 6M4 1L7 5"),
+              new Path2D("M-2 -1L-7 -4M1 -1L0 -6M4 -1L6 -6M-2 1L-6 4M1 1L1 6M4 1L9 4")];
+const FEELERS = new Path2D("M8 -1L11 -3M8 1L11 3");
+
+function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const normAng = a => ((a + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
+const lerp = (a, b, k) => a + (b - a) * k;
+const lerpAng = (a, b, k) => a + normAng(b - a) * k;
+
+/* one pre-drawn picture of an ant per color, size and leg position (cheap to stamp 1600 times) */
+function makeSprite(scale, color, frame, dpr) {
+  const c = document.createElement("canvas");
+  c.width = Math.ceil(26 * scale * dpr) + 2; c.height = Math.ceil(16 * scale * dpr) + 2;
+  const x = c.getContext("2d");
+  x.translate(c.width / 2, c.height / 2); x.scale(dpr * scale, dpr * scale);
+  x.strokeStyle = color; x.fillStyle = color; x.lineWidth = 2.2; x.lineCap = "round";
+  x.stroke(LEGS[frame]); x.stroke(FEELERS);
+  [[-7, 0, 4.6, 3.1], [0, 0, 3, 2.2], [6.5, 0, 2.7, 2.5]].forEach(e => { x.beginPath(); x.ellipse(e[0], e[1], e[2], e[3], 0, 0, Math.PI * 2); x.fill(); });
+  c.cw = c.width / dpr; c.ch = c.height / dpr;
+  return c;
+}
+
+function buildPlan(idx) {
+  const rnd = mulberry32(idx * 7919 + 13);
+  const r = document.getElementById("w").getBoundingClientRect();
+  const H = { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width, h: r.height };
+  const vw = innerWidth, vh = innerHeight, floor = vh - 60;
+
+  /* simulate the W falling (gravity, a couple of bounces, tumbling) */
+  let x = H.x, y = H.y, vx = (rnd() - .35) * 240, vy = 0, a = 0, om = (rnd() - .5) * 10, t = 0;
+  const dt = 1 / 120, g = 2800, traj = [];
+  while (t < 2.2) {
+    vy += g * dt; x += vx * dt; y += vy * dt; a += om * dt; t += dt;
+    if (x < 30) { x = 30; vx = Math.abs(vx); }
+    if (x > vw - 30) { x = vw - 30; vx = -Math.abs(vx); }
+    if (y >= floor) {
+      y = floor;
+      if (Math.abs(vy) > 200) { vy = -vy * .36; vx *= .75; om *= .55; }
+      else { vy = 0; vx *= .9; om *= .85; if (Math.abs(vx) < 3 && Math.abs(om) < .08) { traj.push([x, y, a]); break; } }
+    }
+    traj.push([x, y, a]);
+  }
+  const last = traj[traj.length - 1];
+  const L = { x: last[0], y: floor, a: normAng(last[2]) };
+  const fallEnd = traj.length / 120;
+
+  /* the tower: a tapering column from the bottom of the page up toward the gap.
+     Ants store relative (lat, h); world positions are computed live from the swaying base. */
+  const Tx = H.x, yb = vh - 14, yt = H.y + 8, TH = yb - yt;
+  const wAt = h => 5 + 30 * Math.pow(1 - h, 1.3);
+
+  const age = nextBirthday(Date.now()).year - BIRTH_YEAR - 1;
+  const total = BLACK_ANTS + Math.min(age, 800);
+  const ants = [];
+  for (let i = 0; i < total; i++) {
+    let h; do { h = rnd(); } while (rnd() * 35 > wAt(h));            /* more ants low down, where it is wide */
+    const lat = (rnd() - .5) * wAt(h), side = rnd() < .5 ? -1 : 1;
+    const c = 4 + rnd() * .8;                                          /* when it starts climbing */
+    const d = Math.max(c + .25, 4.8 + h * (T_TOP - .3 - 4.8) + rnd() * .3);   /* higher spots fill later */
+    const restY = yb - h * TH;
+    const gy = Math.max(restY, vh - 6 - rnd() * 20), tl = Math.sqrt(2 * (gy - restY) / G), vxA = (rnd() - .5) * 120;
+    ants.push({
+      big: i >= BLACK_ANTS, lat, h, side, restY,
+      B: { x: Tx + lat * 2 + (rnd() - .5) * 30, y: yb - rnd() * 28 },
+      S: { x: side < 0 ? -12 : vw + 12, y: vh - 8 - rnd() * 90 },
+      a: 2.6 + rnd() * 1.3, c, d, r: T_FALL + rnd() * .5,
+      ta: -Math.PI / 2 + (rnd() - .5) * 1.4, ph: rnd() * 6.28, wob: 3 + rnd() * 5,
+      vx: vxA, om: (rnd() - .5) * 14, gy, tl
+    });
+  }
+  return { idx, H, traj, fallEnd, L, ants, vw, vh, age, Tx, yb, TH };
+}
+
+function posW(P, t, sway) {
+  if (t < P.fallEnd) {
+    const q = P.traj[Math.min(P.traj.length - 1, Math.floor(t * 120))];
+    return { x: q[0], y: q[1], a: q[2], dead: true };
+  }
+  /* stay dead on the ground until the tower is high enough to pick it up */
+  if (t < T_TOP) return { x: P.L.x, y: P.L.y, a: P.L.a, dead: true };
+  if (t < T_CARRY) {
+    /* ants carry the W up with the rising tower and slot it into the domain */
+    const u = (t - T_TOP) / (T_CARRY - T_TOP);
+    const ease = 1 - Math.pow(1 - u, 1.7);
+    const bx = sway ? sway.bx : P.Tx;
+    const theta = sway ? sway.theta : 0;
+    const c = Math.cos(theta), s = Math.sin(theta);
+    /* follow the current top of the growing tower, then ease into the letter spot */
+    const built = Math.min(1, (t - 4) / (T_TOP - 4));
+    const climb = Math.min(1, ease * 0.92 + built * 0.08);
+    const place = Math.max(0, (ease - 0.68) / 0.32);
+    const localY = -P.TH * climb;
+    const towerX = bx - localY * s;
+    const towerY = P.yb + localY * c;
+    return {
+      x: lerp(towerX, P.H.x, place),
+      y: lerp(towerY, P.H.y, place),
+      a: lerpAng(P.L.a, 0, ease),
+      dead: place < 0.85
+    };
+  }
+  return null;
+}
+
+const T1 = { x: 0, y: 0 }, T2 = { x: 0, y: 0 };
+function arrive(A, u, o) {
+  const e = 1 - Math.pow(1 - u, 1.6), dx = A.B.x - A.S.x, dy = A.B.y - A.S.y, len = Math.hypot(dx, dy) || 1;
+  const wob = A.wob * Math.sin(u * Math.PI * 4 + A.ph) * (1 - u);
+  o.x = A.S.x + dx * e - dy / len * wob; o.y = A.S.y + dy * e + dx / len * wob;
+}
+/* world position of a relative tower slot given current base (bx,by) and lean angle */
+function towerPos(P, A, bx, by, theta, o) {
+  const c = Math.cos(theta), s = Math.sin(theta);
+  const lx = A.lat, ly = -A.h * P.TH;
+  o.x = bx + lx * c - ly * s;
+  o.y = by + lx * s + ly * c;
+}
+function antState(P, A, t, sway, o) {
+  o.alpha = 1; o.walk = false;
+  const bx = sway.bx, by = P.yb, theta = sway.theta;
+  if (t < A.a) {   /* walking in along the bottom */
+    const u = Math.max(0, Math.min(1, (t - A.s0) / (A.a - A.s0)));
+    arrive(A, u, T1); arrive(A, Math.min(1, u + .02), T2);
+    o.a = (T2.x === T1.x && T2.y === T1.y) ? Math.atan2(A.B.y - A.S.y, A.B.x - A.S.x) : Math.atan2(T2.y - T1.y, T2.x - T1.x);
+    o.x = T1.x; o.y = T1.y; o.walk = u > 0 && u < 1; return;
+  }
+  if (t < A.c) {   /* milling about at the base, shifting to counteract lean */
+    const counter = -sway.theta * 55 + sway.omega * -8;
+    const targetX = A.B.x + counter + 1.5 * Math.sin(t * 3 + A.ph);
+    if (A._mx === undefined) A._mx = A.B.x;
+    A._mx = lerp(A._mx, targetX, 0.18);
+    o.x = A._mx;
+    o.y = A.B.y + 1.2 * Math.cos(t * 2.6 + A.ph);
+    o.a = Math.atan2(0, targetX - A._mx + 0.01) * 0.4 + A.ta * 0.3 + .4 * Math.sin(t * 2 + A.ph);
+    o.walk = Math.abs(A._mx - (A.B.x + counter)) > 1.5;
+    return;
+  }
+  if (t < A.d) {   /* climbing the (swaying) tower to its spot */
+    const u = (t - A.c) / (A.d - A.c);
+    const fromX = A.B.x - sway.theta * 40, fromY = A.B.y;
+    towerPos(P, A, bx, by, theta, T1);
+    o.x = lerp(fromX, T1.x, u) + 1.2 * Math.sin(u * (A.d - A.c) * 6 + A.ph);
+    o.y = lerp(fromY, T1.y, u);
+    o.a = Math.atan2(T1.y - fromY, T1.x - fromX) + .25 * Math.sin(u * 30 + A.ph) + theta;
+    o.walk = true; return;
+  }
+  if (t < A.r) {   /* clinging in the swaying tower (nervous shake once top is reached) */
+    const k = t >= T_TOP ? 1.1 : .5;
+    towerPos(P, A, bx, by, theta, T1);
+    o.x = T1.x + k * Math.sin(t * (9 + A.ph % 4) + A.ph);
+    o.y = T1.y + k * Math.cos(t * (11 + A.ph % 3) + A.ph * 2);
+    o.a = A.ta + theta; return;
+  }
+  /* release: fall from current swayed position */
+  if (!A._released) {
+    towerPos(P, A, bx, by, theta, T1);
+    A._rx = T1.x; A._ry = T1.y; A._ra = A.ta + theta;
+    A._released = true;
+    A.lx = Math.max(8, Math.min(P.vw - 8, A._rx + A.vx * A.tl));
+  }
+  const tau = t - A.r;
+  if (tau < A.tl) {  /* falling */
+    o.x = A._rx + A.vx * tau; o.y = A._ry + .5 * G * tau * tau; o.a = A._ra + A.om * tau; return;
+  }
+  /* landed: unresponsive for 2.5s, then fade away */
+  o.x = A.lx; o.y = A.gy; o.a = A._ra + A.om * A.tl;
+  o.alpha = 1 - Math.max(0, Math.min(1, (t - (A.r + A.tl) - STILL) / FADE));
+}
+
+let active = null, raf = 0, timer = 0;
+const layer = document.getElementById("layer");
+
+function startSeq(idx) {
+  endSeq();
+  const dpr = Math.min(window.devicePixelRatio || 1, 3), vw = innerWidth, vh = innerHeight;
+  const plan = buildPlan(idx);
+  const rnd = mulberry32(idx * 31 + 7);
+  plan.ants.forEach(A => { A.s0 = .2 + rnd() * 1.4; A._released = false; A._mx = undefined; });
+  const cv = document.createElement("canvas");
+  cv.width = Math.round(vw * dpr); cv.height = Math.round(vh * dpr);
+  cv.style.cssText = "position:absolute;left:0;top:0;width:100%;height:100%";
+  layer.appendChild(cv);
+  const fw = document.createElement("div");
+  fw.className = "dom fw"; fw.textContent = "w";
+  Object.assign(fw.style, { width: plan.H.w + "px", height: plan.H.h + "px", lineHeight: plan.H.h + "px" });
+  layer.appendChild(fw);
+  /* black and blue, or (from age 800 on) every ant in one color that changes each year */
+  const allOne = plan.age >= BLACK_ANTS, yc = `hsl(${(plan.age * 37) % 360} 90% 50%)`;
+  const small = allOne ? yc : "#000", big = allOne ? yc : BLUE;
+  const sprites = { small: [0, 1].map(f => makeSprite(SMALL, small, f, dpr)), big: [0, 1].map(f => makeSprite(BIG, big, f, dpr)) };
+  /* sway state: inverted-pendulum-ish lean that base ants try to cancel */
+  active = {
+    idx, plan, cv, ctx: cv.getContext("2d"), fw, vw, vh, dpr, sprites,
+    o: { x: 0, y: 0, a: 0, walk: false, alpha: 1 },
+    sway: { theta: 0, omega: 0, bx: plan.Tx, lastT: 0 },
+    _flickered: false
+  };
+}
+function endSeq() {
+  if (!active) return;
+  layer.innerHTML = "";
+  document.body.classList.remove("seq");
+  active = null;
+}
+function updateSway(S, t, dt) {
+  const P = S.plan, sw = S.sway;
+  if (t < 4 || t >= T_FALL) { /* no tower yet or already collapsing */
+    sw.theta *= 0.9; sw.omega *= 0.9;
+    sw.bx = lerp(sw.bx, P.Tx, 0.1);
+    return;
+  }
+  /* how built is the tower? (0..1) affects stiffness and mass height */
+  const built = Math.min(1, Math.max(0, (t - 4) / (T_TOP - 4)));
+  const hEff = 0.25 + 0.75 * built;          /* effective height fraction */
+  /* gravity torque pulls lean larger; damping; noise */
+  const gTorque = 3.2 * Math.sin(sw.theta) * hEff;
+  const damp = -1.8 * sw.omega;
+  const noise = (Math.sin(t * 2.7) * 0.4 + Math.sin(t * 5.1 + 1.3) * 0.25) * (0.3 + 0.7 * built);
+  /* base shift restoring force: ants push base under the lean */
+  const maxShift = 38 * built;
+  const desiredBx = P.Tx - Math.sin(sw.theta) * 70 * built - sw.omega * 12;
+  sw.bx = Math.max(P.Tx - maxShift, Math.min(P.Tx + maxShift, lerp(sw.bx, desiredBx, 0.12)));
+  const baseRest = (sw.bx - P.Tx) * 0.045;   /* shifting base creates restoring torque */
+  sw.omega += (gTorque + damp + noise + baseRest) * dt;
+  sw.theta += sw.omega * dt;
+  /* soft clamp so it doesn't flop over while ants are still holding */
+  const maxA = 0.38 * (0.4 + 0.6 * built);
+  if (Math.abs(sw.theta) > maxA) {
+    sw.theta = Math.sign(sw.theta) * maxA;
+    sw.omega *= 0.4;
+  }
+}
+function render(t) {
+  const S = active, P = S.plan, ctx = S.ctx, dpr = S.dpr, o = S.o;
+
+  /* integrate sway first so posW can use it */
+  const dt = S.sway.lastT ? Math.min(0.05, t - S.sway.lastT) : 0.016;
+  S.sway.lastT = t;
+  updateSway(S, t, dt);
+
+  const w = posW(P, t, S.sway);
+  document.body.classList.toggle("seq", !!w);
+  if (w) {
+    S.fw.style.display = "block";
+    S.fw.classList.toggle("dead", !!w.dead);
+    const fadeStart = T_CARRY - 0.28;
+    S.fw.style.opacity = t > fadeStart ? Math.max(0, (T_CARRY - t) / 0.28) : 1;
+    S.fw.style.transform = `translate(${w.x - P.H.w / 2}px,${w.y - P.H.h / 2}px) rotate(${w.a}rad)`;
+  } else {
+    S.fw.style.display = "none";
+    /* power flickers back on when the letter is restored */
+    if (!S._flickered && t >= T_CARRY) {
+      S._flickered = true;
+      document.body.classList.add("flicker");
+      setTimeout(() => document.body.classList.remove("flicker"), 1200);
+    }
+  }
+
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, S.cv.width, S.cv.height);
+  const frameSel = (t * 12) | 0;
+  for (let i = 0; i < P.ants.length; i++) {
+    const A = P.ants[i];
+    antState(P, A, t, S.sway, o);
+    if (o.alpha <= 0 || o.x < -20 || o.x > S.vw + 20 || o.y < -20 || o.y > S.vh + 20) continue;
+    const c = Math.cos(o.a), s = Math.sin(o.a), sp = (A.big ? S.sprites.big : S.sprites.small)[o.walk ? (frameSel + (A.ph * 3 | 0)) & 1 : 0];
+    ctx.setTransform(dpr * c, dpr * s, -dpr * s, dpr * c, o.x * dpr, o.y * dpr);
+    ctx.globalAlpha = o.alpha;
+    ctx.drawImage(sp, -sp.cw / 2, -sp.ch / 2, sp.cw, sp.ch);
+  }
+  ctx.globalAlpha = 1;
+}
+function frame() {
+  cancelAnimationFrame(raf); clearTimeout(timer);
+  const now = Date.now(), idx = Math.floor(now / 60000), t = (now % 60000) / 1000;
+  if (t < SEQ) {
+    if (!active || active.idx !== idx || active.vw !== innerWidth || active.vh !== innerHeight) startSeq(idx);
+    render(t);
+    raf = requestAnimationFrame(frame);
+  } else {
+    endSeq();
+    timer = setTimeout(frame, 60000 - (now % 60000) + 30);
+  }
+}
+frame();
+document.addEventListener("visibilitychange", () => { if (!document.hidden) frame(); });
+
+/* ===== Code of Conduct modal ===== */
+(function () {
+  const overlay = document.getElementById("coc-overlay");
+  const body = document.getElementById("coc-body");
+  const closeBtn = overlay.querySelector(".coc-close");
+  const up = document.getElementById("coc-up");
+  const down = document.getElementById("coc-down");
+
+  function openCoc(e) {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
+    setPop(false);
+    overlay.classList.add("open");
+    overlay.setAttribute("aria-hidden", "false");
+    body.scrollTop = 0;
+  }
+  function closeCoc() {
+    overlay.classList.remove("open");
+    overlay.setAttribute("aria-hidden", "true");
+  }
+
+  /* use capture so it still works after the menu innerHTML is swapped */
+  document.addEventListener("click", e => {
+    const link = e.target.closest("#coc-link");
+    if (link) openCoc(e);
+  }, true);
+  closeBtn.addEventListener("click", closeCoc);
+  overlay.addEventListener("click", e => { if (e.target === overlay) closeCoc(); });
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && overlay.classList.contains("open")) closeCoc();
+  });
+  up.addEventListener("click", () => { body.scrollBy({ top: -120, behavior: "smooth" }); });
+  down.addEventListener("click", () => { body.scrollBy({ top: 120, behavior: "smooth" }); });
+})();
+
+/* ===== Why modal ===== */
+(function () {
+  const overlay = document.getElementById("why-overlay");
+  const closeBtn = overlay.querySelector(".why-close");
+
+  function openWhy(e) {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
+    setPop(false);
+    overlay.classList.add("open");
+    overlay.setAttribute("aria-hidden", "false");
+  }
+  function closeWhy() {
+    overlay.classList.remove("open");
+    overlay.setAttribute("aria-hidden", "true");
+  }
+
+  document.addEventListener("click", e => {
+    const btn = e.target.closest("#why-btn");
+    if (btn) openWhy(e);
+  }, true);
+  closeBtn.addEventListener("click", closeWhy);
+  overlay.addEventListener("click", e => { if (e.target === overlay) closeWhy(); });
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && overlay.classList.contains("open")) closeWhy();
+  });
+})();
+</script>
+</body>
+</html>
